@@ -5,7 +5,6 @@ from google.adk.models.registry import LLMRegistry
 from google.adk.models.llm_request import LlmRequest
 from google.adk.models.llm_response import LlmResponse
 from google.genai import types
-from google.genai.errors import ClientError
 
 def generate_mock_response(agent_type: str, prompt: str) -> str:
     agent_type = agent_type.lower()
@@ -36,10 +35,10 @@ def generate_mock_response(agent_type: str, prompt: str) -> str:
 class ResilientLLM(BaseLlm):
     """
     A unified LLM wrapper that attempts to use the real Gemini model first.
-    If it fails due to Quota/Rate Limits, or if USE_FALLBACK_MODE=true, it seamlessly
+    If it fails due to Quota/Rate Limits, Missing Keys, or Network issues, it seamlessly
     switches to a local rule-based MockLLM to keep the system running.
     """
-    model: str = "gemini-2.0-flash"
+    model: str = "gemini-2.5-pro"
     agent_type: str = "general"
 
     async def generate_content_async(
@@ -47,27 +46,16 @@ class ResilientLLM(BaseLlm):
     ):
         use_fallback = os.getenv("USE_FALLBACK_MODE", "false").lower() == "true"
         
-        real_llm = LLMRegistry.new_llm(self.model)
-
         if not use_fallback:
             try:
                 # Attempt to yield from the actual model
+                real_llm = LLMRegistry.new_llm(self.model)
                 async for chunk in real_llm.generate_content_async(llm_request, stream=stream):
                     yield chunk
                 return
-            except ClientError as e:
-                # Detect 429 Resource Exhausted / Quota Error
-                if e.code == 429:
-                    print(f"\n[Warning] API Quota Exceeded for {self.model}. Auto-switching to rule-based fallback mode for {self.agent_type}.\n")
-                    use_fallback = True
-                else:
-                    raise e
             except Exception as e:
-                if "429" in str(e) or "quota" in str(e).lower():
-                    print(f"\n[Warning] API Quota Exceeded. Auto-switching to rule-based fallback mode for {self.agent_type}.\n")
-                    use_fallback = True
-                else:
-                    raise e
+                print(f"\n[Warning] Gemini API call failed: {e}. Auto-switching to rule-based fallback mode for {self.agent_type}.\n")
+                use_fallback = True
 
         if use_fallback:
             # Fallback mock logic
