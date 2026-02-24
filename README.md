@@ -49,7 +49,12 @@ Open `.env` (make sure it is at `travel_agent/.env`) and replace `your_google_ap
 ```text
 GOOGLE_API_KEY="AIzaSy..."
 ```
+## Key Features
 
+- Built using Google Agent Development Kit (ADK)
+- Demonstrates Sequential Multi-Agent Orchestration
+- Uses the built-in GoogleSearchTool from ADK to fetch real-world travel information
+- Includes deterministic fallback responses when Gemini is unavailable
 ## Execution Modes & Fallback
 
 This project supports **Two Execution Modes**:
