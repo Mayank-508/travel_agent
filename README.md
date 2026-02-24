@@ -47,7 +47,7 @@ pip install -r requirements.txt
 ### 3. Set API Key
 Open `.env` (make sure it is at `travel_agent/.env`) and replace `your_google_api_key_here` with your actual Gemini API Key:
 ```text
-GOOGLE_API_KEY="AIzaSy..."
+GOOGLE_API_KEY="your_api_key_here"
 ```
 ## Key Features
 
